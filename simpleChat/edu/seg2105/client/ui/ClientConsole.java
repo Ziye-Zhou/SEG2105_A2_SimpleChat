@@ -106,7 +106,7 @@ public class ClientConsole implements ChatIF
    */
   public void display(String message) 
   {
-    System.out.println("> " + message);
+    System.out.println(message);
   }
 
   
@@ -135,14 +135,17 @@ public class ClientConsole implements ChatIF
 	        if (args.length > 1) {
 	            host = args[1];  // Assign host if provided
 	        }
-	        if (args.length > 2) {
+	        if (args.length >= 2) {
 	            port = Integer.parseInt(args[2]);  // Assign port if provided and valid
 	        }
+	        
 	    } catch (NumberFormatException e) {
 	        System.out.println("Invalid port. Using default port: " + DEFAULT_PORT);
 	        port = DEFAULT_PORT;
 	    }
-
+	    System.out.println("Login ID: " + loginID);
+	    System.out.println("Host: " + host);
+	    System.out.println("Port: " + port);
 	    // Create and start the client
 	    ClientConsole chat = new ClientConsole(host, port, loginID);
 	    chat.accept();  // Wait for console data

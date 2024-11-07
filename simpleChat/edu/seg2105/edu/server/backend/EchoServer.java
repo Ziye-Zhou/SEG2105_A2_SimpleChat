@@ -109,7 +109,7 @@ public class EchoServer extends AbstractServer
           // Prefix msg with login ID and broadcast
           String prefixedMessage = "Message received: " + message + " from " + loginID;
           serverUI.display(prefixedMessage);
-          sendToAllClients(loginID + ": " + message);
+          sendToAllClients(loginID + " > " + message);
       }
   }
 
@@ -160,10 +160,22 @@ public class EchoServer extends AbstractServer
               System.exit(0);
           } else if (command.equalsIgnoreCase("#stop")) {
               stopListening();
-              serverUI.display("Server has stopped listening for new clients.");
           } else if (command.equalsIgnoreCase("#close")) {
-              close();
-              serverUI.display("Server has stopped listening and disconnected all clients.");
+              // Loop through each connected client and display disconnection message
+              Thread[] clientThreadList = getClientConnections();
+              for (Thread clientThread : clientThreadList) {
+                  if (clientThread != null) {
+                      ConnectionToClient client = (ConnectionToClient) clientThread;
+                      String loginID = (String) client.getInfo("loginID");
+                      if (loginID == null) {
+                          loginID = "unknown";
+                      }
+                      serverUI.display(loginID + " has disconnected.");
+                  }
+              }
+              
+              // Close all client connections and stop the server
+              close();;
           } else if (command.startsWith("#setport")) {
               if (!isListening()) {
                   String[] tokens = command.split(" ");
@@ -219,7 +231,7 @@ public class EchoServer extends AbstractServer
     EchoServer sv = new EchoServer(port, new ChatIF() {
         @Override
         public void display(String message) {
-            System.out.println("> " + message);
+            System.out.println(message);
         }
     });
     

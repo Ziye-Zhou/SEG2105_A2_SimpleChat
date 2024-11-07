@@ -69,7 +69,7 @@ public class ServerConsole implements ChatIF {
                     server.handleCommand(message);
                 } else if (message != null && !message.trim().isEmpty()) {
                     // Prefix message with "SERVER MSG>"
-                    String serverMessage = "SERVER MSG> " + message;
+                    String serverMessage = "SERVER MESSAGE> " + message;
 
                     // Send message to all clients
                     server.sendToAllClients(serverMessage);
@@ -91,7 +91,7 @@ public class ServerConsole implements ChatIF {
      */
     @Override
     public void display(String message) {
-        System.out.println("> " + message);
+        System.out.println(message);
     }
 
     // Class methods ***************************************************
@@ -113,6 +113,6 @@ public class ServerConsole implements ChatIF {
         }
 
         ServerConsole console = new ServerConsole(port);
-        console.accept(); // 11Accept console data from server operator
+        console.accept(); // Accept console data from server operator
     }
 }
