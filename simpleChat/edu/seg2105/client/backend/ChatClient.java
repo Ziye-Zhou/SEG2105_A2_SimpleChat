@@ -28,6 +28,7 @@ public class ChatClient extends AbstractClient
    */
   ChatIF clientUI; 
   
+  private String loginID;
   private String host;
   private int port;
 
@@ -40,21 +41,43 @@ public class ChatClient extends AbstractClient
    * @param host The server to connect to.
    * @param port The port number to connect on.
    * @param clientUI The interface type variable.
+   * @param loginID The login ID of the client.
+   * @throws IOException If unable to connect to the server.
    */
   
-  public ChatClient(String host, int port, ChatIF clientUI) 
+  public ChatClient(String host, int port, ChatIF clientUI, String loginID) 
     throws IOException 
   {
     super(host, port); //Call the superclass constructor
     this.clientUI = clientUI;
+    this.loginID = loginID;
     this.host = host;
     this.port = port;
+    
+    // Attempt to open the connection to the server
     openConnection();
+    
+    // Send the #login <LoginID> message to the server immediately after connecting
+    sendLoginMessage();
   }
 
   
   //Instance methods ************************************************
-    
+  /**
+   * Send the #login <LoginID> message to the server
+   */
+  private void sendLoginMessage() {
+	    try {
+	        System.out.println("Sending login message: #login " + this.loginID); // Debugging
+	        sendToServer("#login " + this.loginID); // Send directly to the server
+	        clientUI.display("Login message sent with login ID: " + this.loginID);
+	    } catch (IOException e) {
+	        clientUI.display("Error: Unable to send login message to server.");
+	        quit(); // Terminate the client if unable to send login message
+	    }
+	}
+
+  
   /**
    * This method handles all data that comes in from the server.
    *
@@ -72,26 +95,27 @@ public class ChatClient extends AbstractClient
    *
    * @param message The message from the UI.    
    */
-  public void handleMessageFromClientUI(String message)
-  {
-	  
-    try
-    {
-      if (message.startsWith("#")){
-    	  handleCommand(message);
-      }
-      else {
-    	  sendToServer(message);
-    	  }
-    }
-    
-    catch(IOException e)
-    {
-      clientUI.display
-        ("Could not send message to server.  Terminating client.");
-      quit();
-    }
-  }
+  public void handleMessageFromClientUI(String message) {
+	    try {
+	        if (message.startsWith("#login")) {
+	            if (isConnected()) {
+	                clientUI.display("Error: Already logged in. Please log off first.");
+	            } else {
+	                sendToServer(message);
+	                clientUI.display("Login command sent: " + message);
+	            }
+	        } else if (message.startsWith("#")) {
+	            handleCommand(message);
+	        } else {
+	            sendToServer(message);
+	        }
+	    } catch (IOException e) {
+	        clientUI.display("Could not send message to server. Terminating client.");
+	        quit();
+	    }
+	}
+
+
   
   private void handleCommand (String command) {
 	  String[] tokens = command.split("  ");
@@ -132,19 +156,19 @@ public class ChatClient extends AbstractClient
 		    }
 		  }
 		  else if (command.equals("#login")) {
-		    if (isConnected()) {
-		      clientUI.display("Already connected to the server.");
-		    } else {
-		      setHost(this.host);
-		      setPort(this.port);
-		      try {
-		        openConnection();
-		        clientUI.display("Client logged in.");
-		      } catch (IOException e) {
-		        clientUI.display("Error logging in: " + e.getMessage());
+		        if (isConnected()) {
+		          clientUI.display("Already connected to the server.");
+		        } else {
+		          setHost(this.host);
+		          setPort(this.port);
+		          try {
+		            openConnection();
+		            clientUI.display("Client logged in.");
+		          } catch (IOException e) {
+		            clientUI.display("Error logging in: " + e.getMessage());
+		          }
+		        }
 		      }
-		    }
-		  }
 		  else if (command.equals("#gethost")) {
 		    clientUI.display("Current host: " + getHost());
 		  }

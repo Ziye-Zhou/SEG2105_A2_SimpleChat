@@ -44,8 +44,7 @@ public class ServerConsole implements ChatIF {
             server = new EchoServer(port,this);  // Properly initializing the EchoServer instance
             server.listen(); // Start listening for connections
         } catch (IOException exception) {
-            System.out.println("Error: Can't set up server!"
-                    + " Terminating.");
+            System.out.println("Error: Can't set up server! Terminating.");
             System.exit(1);
         }
         // Create scanner object to read from the console
@@ -114,6 +113,6 @@ public class ServerConsole implements ChatIF {
         }
 
         ServerConsole console = new ServerConsole(port);
-        console.accept(); // Accept console data from server operator
+        console.accept(); // 11Accept console data from server operator
     }
 }

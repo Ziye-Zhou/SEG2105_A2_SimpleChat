@@ -52,20 +52,74 @@ public class EchoServer extends AbstractServer
    */
   @Override
   public void handleMessageFromClient(Object msg, ConnectionToClient client) {
-      String message = "Message received: " + msg + " from " + client.getInfo("username");
-      System.out.println(message);
-      serverUI.display(message);  // Display message on the server console
-      this.sendToAllClients(msg); // Send the message to all clients
+      String message = msg.toString();
+
+      // Check if the message is a login command
+      if (message.startsWith("#login")) {
+          String loginID = message.substring(7).trim();
+
+          // Check if a login ID has already been set for this client.
+          if (client.getInfo("loginID") != null) {
+              try {
+                  client.sendToClient("Error: Login has already been set. Connection will be closed.");
+                  client.close();
+              } catch (IOException e) {
+                  serverUI.display("Error closing connection for client with duplicate login attempt.");
+              }
+              return;
+          }
+
+          // Check if login ID is provided
+          if (loginID.isEmpty()) {
+              try {
+                  client.sendToClient("Error: Login ID is required.");
+                  client.close();
+              } catch (IOException e) {
+                  serverUI.display("Error closing connection for client with missing login ID.");
+              }
+              return;
+          }
+
+          // Set the login ID in the client's connection info
+          client.setInfo("loginID", loginID);
+          
+          // Display connection message on the server console
+          serverUI.display("A new client has connected to the server.");
+          serverUI.display("Message received: #login " + loginID + " from null.");
+
+          // Broadcast that the client has logged on to all clients
+          sendToAllClients(loginID + " has logged on.");
+          
+          // Display that the client has logged on in the server console as well
+          serverUI.display(loginID + " has logged on.");
+          
+      } else {
+          // Retrieve the client's loginID for subsequent messages
+          String loginID = (String) client.getInfo("loginID");
+          if (loginID == null) {
+              try {
+                  client.sendToClient("Error: You must log in first. Connection will be closed.");
+                  client.close();
+              } catch (IOException e) {
+                  serverUI.display("Error closing connection for client without login ID.");
+              }
+              return;
+          }
+
+          // Prefix msg with login ID and broadcast
+          String prefixedMessage = "Message received: " + message + " from " + loginID;
+          serverUI.display(prefixedMessage);
+          sendToAllClients(loginID + ": " + message);
+      }
   }
-    
+
   /**
    * This method overrides the one in the superclass.  Called
    * when the server starts listening for connections.
    */
   protected void serverStarted()
   {
-    System.out.println
-      ("Server listening for connections on port " + getPort());
+    serverUI.display("Server listening for connections on port " + getPort());
   }
   
   /**
@@ -74,8 +128,7 @@ public class EchoServer extends AbstractServer
    */
   protected void serverStopped()
   {
-    System.out.println
-      ("Server has stopped listening for connections.");
+	serverUI.display("Server has stopped listening for connections.");
   }
   
   /**
@@ -91,7 +144,12 @@ public class EchoServer extends AbstractServer
    */
   @Override
   synchronized protected void clientDisconnected(ConnectionToClient client) {
-	  System.out.println("Client disconnected: " + client.getInetAddress().getHostAddress());
+	  // Retrieve login ID
+	  String loginID = (String) client.getInfo("loginID");
+	  if (loginID == null) {
+		  loginID = "unknown";
+	  }
+	  serverUI.display("Client disconnected: " + client.getInetAddress().getHostAddress());
   }
   
   //Class methods ***************************************************
